@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}モバイルオーダー{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            padding-top: 56px;
+        }
+        .navbar-brand {
+            font-weight: bold;
+        }
+        .btn-nav {
+            margin: 0 5px;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary fixed-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'order:menu_list' %}">モバイルオーダー</a>
+            {% if session %}
+            <div class="d-flex">
+                <a href="{% url 'order:menu_list' %}" class="btn btn-sm btn-light btn-nav">メニュー</a>
+                <a href="{% url 'order:order_history' %}" class="btn btn-sm btn-light btn-nav">注文履歴</a>
+                <a href="{% url 'order:call_staff' %}" class="btn btn-sm btn-warning btn-nav">店員呼出</a>
+                <a href="{% url 'order:payment' %}" class="btn btn-sm btn-success btn-nav">会計</a>
+            </div>
+            {% endif %}
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

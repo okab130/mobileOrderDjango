@@ -1,0 +1,120 @@
+{% extends 'order/base.html' %}
+
+{% block title %}メニュー - モバイルオーダー{% endblock %}
+
+{% block extra_css %}
+<style>
+    .menu-item-card {
+        transition: transform 0.2s;
+        cursor: pointer;
+        height: 100%;
+    }
+    .menu-item-card:hover {
+        transform: scale(1.05);
+    }
+    .menu-item-img {
+        height: 200px;
+        object-fit: cover;
+    }
+    .unavailable {
+        opacity: 0.5;
+        filter: grayscale(100%);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">メニュー（{{ session.table }}）</h2>
+
+<div class="row g-3">
+    {% for item in menu_items %}
+    <div class="col-6 col-md-4 col-lg-3">
+        <div class="card menu-item-card {% if not item.is_available %}unavailable{% endif %}" 
+             onclick="{% if item.is_available %}openOrderModal({{ item.id }}, '{{ item.name }}', {{ item.price }}, '{{ item.large_image.url }}'){% endif %}">
+            <img src="{{ item.thumbnail.url }}" class="card-img-top menu-item-img" alt="{{ item.name }}">
+            <div class="card-body">
+                <h6 class="card-title">{{ item.name }}</h6>
+                <p class="card-text text-primary fw-bold">¥{{ item.price }}</p>
+                {% if not item.is_available %}
+                <span class="badge bg-secondary">売り切れ</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- 注文モーダル -->
+<div class="modal fade" id="orderModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalItemName"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalItemImage" src="" class="img-fluid mb-3" alt="">
+                <p class="h4 text-primary mb-3" id="modalItemPrice"></p>
+                
+                <form id="orderForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="menu_item_id" id="menuItemId">
+                    
+                    <div class="mb-3">
+                        <label for="quantity" class="form-label">数量</label>
+                        <input type="number" class="form-control form-control-lg text-center" 
+                               id="quantity" name="quantity" min="1" max="10" value="1" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-lg w-100">注文する</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let orderModal;
+
+document.addEventListener('DOMContentLoaded', function() {
+    orderModal = new bootstrap.Modal(document.getElementById('orderModal'));
+});
+
+function openOrderModal(itemId, itemName, itemPrice, imageUrl) {
+    document.getElementById('menuItemId').value = itemId;
+    document.getElementById('modalItemName').textContent = itemName;
+    document.getElementById('modalItemPrice').textContent = '¥' + itemPrice;
+    document.getElementById('modalItemImage').src = imageUrl;
+    document.getElementById('quantity').value = 1;
+    
+    orderModal.show();
+}
+
+document.getElementById('orderForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    fetch('/order/submit/', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': formData.get('csrfmiddlewaretoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            orderModal.hide();
+        } else {
+            alert(data.error || 'エラーが発生しました');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('エラーが発生しました');
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends 'management/base.html' %}
+
+{% block title %}ユーザー管理{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">ユーザー管理</h2>
+
+<button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addModal">ユーザー追加</button>
+
+<table class="table">
+    <thead>
+        <tr><th>ID</th><th>ユーザー名</th><th>権限</th><th>状態</th><th>操作</th></tr>
+    </thead>
+    <tbody>
+        {% for u in users %}
+        <tr>
+            <td>{{ u.id }}</td>
+            <td>{{ u.username }}</td>
+            <td>{{ u.get_role_display }}</td>
+            <td>{% if u.is_active %}有効{% else %}無効{% endif %}</td>
+            <td>
+                <button class="btn btn-sm btn-warning" onclick="editUser({{ u.id }})">編集</button>
+                {% if u.id != user.id %}
+                <button class="btn btn-sm btn-danger" onclick="deleteUser({{ u.id }})">削除</button>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="modal fade" id="addModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">ユーザー追加</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addForm">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label>ユーザー名</label>
+                        <input type="text" class="form-control" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>パスワード</label>
+                        <input type="password" class="form-control" name="password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label>権限</label>
+                        <select class="form-select" name="role" required>
+                            <option value="STAFF">スタッフ</option>
+                            <option value="ADMIN">管理者</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">追加</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('addForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    fetch('/management/users/create/', { method: 'POST', body: formData })
+        .then(response => response.json())
+        .then(data => { if(data.success) location.reload(); else alert(data.error); });
+});
+
+function deleteUser(userId) {
+    if(confirm('削除しますか?')) {
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        fetch('/management/users/delete/' + userId + '/', { method: 'POST', body: formData })
+            .then(() => location.reload());
+    }
+}
+</script>
+{% endblock %}

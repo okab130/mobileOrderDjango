@@ -1,0 +1,67 @@
+{% extends 'management/base.html' %}
+
+{% block title %}売上管理{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">売上管理（{{ month }}）</h2>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header"><h5>日別売上</h5></div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead><tr><th>日付</th><th>売上</th></tr></thead>
+                    <tbody>
+                        {% for day, amount in daily_sales %}
+                        <tr><td>{{ day }}</td><td>¥{{ amount }}</td></tr>
+                        {% empty %}
+                        <tr><td colspan="2">データなし</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header"><h5>時間帯別売上</h5></div>
+            <div class="card-body">
+                <table class="table table-sm">
+                    <thead><tr><th>時間帯</th><th>売上</th></tr></thead>
+                    <tbody>
+                        {% for hour, amount in hourly_sales %}
+                        {% if amount > 0 %}
+                        <tr><td>{{ hour }}時</td><td>¥{{ amount }}</td></tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header"><h5>商品別売上ランキング</h5></div>
+            <div class="card-body">
+                <table class="table">
+                    <thead><tr><th>商品名</th><th>販売数</th><th>売上</th></tr></thead>
+                    <tbody>
+                        {% for item in product_sales %}
+                        <tr>
+                            <td>{{ item.menu_item__name }}</td>
+                            <td>{{ item.total_quantity }}</td>
+                            <td>¥{{ item.total_sales }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3">データなし</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

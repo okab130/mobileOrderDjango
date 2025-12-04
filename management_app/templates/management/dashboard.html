@@ -1,0 +1,149 @@
+{% extends 'management/base.html' %}
+
+{% block title %}ダッシュボード - 管理画面{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">注文管理ダッシュボード</h2>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">注文一覧</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>テーブル</th>
+                                <th>商品</th>
+                                <th>数量</th>
+                                <th>注文時刻</th>
+                                <th>経過時間</th>
+                                <th>ステータス</th>
+                                <th>操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in orders %}
+                            <tr>
+                                <td>{{ order.session.table }}</td>
+                                <td>{{ order.menu_item.name }}</td>
+                                <td>{{ order.quantity }}</td>
+                                <td>{{ order.ordered_at|date:"H:i" }}</td>
+                                <td>{{ order.elapsed_minutes }}分</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if order.status == 'PENDING' %}bg-secondary
+                                        {% elif order.status == 'COOKING' %}bg-info
+                                        {% elif order.status == 'COMPLETED' %}bg-warning
+                                        {% endif %}">
+                                        {{ order.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <select class="form-select form-select-sm" onchange="updateStatus({{ order.id }}, this.value)">
+                                        <option value="PENDING" {% if order.status == 'PENDING' %}selected{% endif %}>未着手</option>
+                                        <option value="COOKING" {% if order.status == 'COOKING' %}selected{% endif %}>調理中</option>
+                                        <option value="COMPLETED" {% if order.status == 'COMPLETED' %}selected{% endif %}>完成</option>
+                                        <option value="SERVED" {% if order.status == 'SERVED' %}selected{% endif %}>提供済</option>
+                                    </select>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">注文がありません</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-4">
+            <div class="card-header bg-warning">
+                <h5 class="mb-0">店員呼び出し</h5>
+            </div>
+            <div class="card-body">
+                {% for call in staff_calls %}
+                <div class="alert alert-warning d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>{{ call.table }}</strong><br>
+                        <small>{{ call.get_reason_display }} - {{ call.called_at|date:"H:i" }}</small>
+                    </div>
+                    <button class="btn btn-sm btn-success" onclick="resolveCall({{ call.id }})">対応済</button>
+                </div>
+                {% empty %}
+                <p class="text-muted">呼び出しはありません</p>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">レシート印刷</h5>
+            </div>
+            <div class="card-body">
+                <form>
+                    <div class="mb-3">
+                        <label class="form-label">セッションID</label>
+                        <input type="number" class="form-control" id="sessionId" placeholder="セッションID">
+                    </div>
+                    <button type="button" class="btn btn-primary w-100" onclick="printReceipt()">印刷</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateStatus(orderId, status) {
+    const formData = new FormData();
+    formData.append('order_id', orderId);
+    formData.append('status', status);
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    
+    fetch('/management/order/update-status/', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    });
+}
+
+function resolveCall(callId) {
+    const formData = new FormData();
+    formData.append('call_id', callId);
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    
+    fetch('/management/staff-call/resolve/', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            location.reload();
+        }
+    });
+}
+
+function printReceipt() {
+    const sessionId = document.getElementById('sessionId').value;
+    if (sessionId) {
+        window.open('/management/receipt/' + sessionId + '/', '_blank');
+    }
+}
+
+// 自動リロード（30秒ごと）
+setInterval(() => location.reload(), 30000);
+</script>
+{% endblock %}

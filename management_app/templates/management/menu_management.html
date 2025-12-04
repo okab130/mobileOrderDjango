@@ -1,0 +1,138 @@
+{% extends 'management/base.html' %}
+
+{% block title %}メニュー管理{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">メニュー管理</h2>
+
+<button class="btn btn-primary mb-3" data-bs-toggle="modal" data-bs-target="#addModal">商品追加</button>
+
+<div class="table-responsive">
+    <table class="table">
+        <thead>
+            <tr><th>ID</th><th>商品名</th><th>価格</th><th>提供可能</th><th>操作</th></tr>
+        </thead>
+        <tbody>
+            {% for item in menu_items %}
+            <tr>
+                <td>{{ item.id }}</td>
+                <td>{{ item.name }}</td>
+                <td>¥{{ item.price }}</td>
+                <td>
+                    <input type="checkbox" {% if item.is_available %}checked{% endif %} 
+                           onchange="toggleAvailable({{ item.id }}, this.checked)">
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-warning me-2" onclick="editItem({{ item.id }}, '{{ item.name }}', {{ item.price }})">編集</button>
+                    <button class="btn btn-sm btn-danger" onclick="deleteItem({{ item.id }})">削除</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- 編集モーダル -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">商品編集</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <input type="hidden" id="editItemId" name="item_id">
+                    <div class="mb-3">
+                        <label class="form-label">商品名</label>
+                        <input type="text" class="form-control" id="editName" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">価格</label>
+                        <input type="number" class="form-control" id="editPrice" name="price" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">画像（変更しない場合は空欄）</label>
+                        <input type="file" class="form-control" id="editImage" name="image" accept="image/*">
+                    </div>
+                    <button type="submit" class="btn btn-primary">更新</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="addModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">商品追加</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addForm" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">商品名</label>
+                        <input type="text" class="form-control" name="name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">価格</label>
+                        <input type="number" class="form-control" name="price" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">画像</label>
+                        <input type="file" class="form-control" name="image" accept="image/*" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">追加</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('addForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(this);
+    fetch('/management/menu/create/', { method: 'POST', body: formData })
+        .then(response => response.json())
+        .then(data => { if(data.success) location.reload(); });
+});
+
+document.getElementById('editForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const itemId = document.getElementById('editItemId').value;
+    const formData = new FormData(this);
+    fetch('/management/menu/update/' + itemId + '/', { method: 'POST', body: formData })
+        .then(response => response.json())
+        .then(data => { if(data.success) location.reload(); });
+});
+
+function editItem(itemId, itemName, itemPrice) {
+    document.getElementById('editItemId').value = itemId;
+    document.getElementById('editName').value = itemName;
+    document.getElementById('editPrice').value = itemPrice;
+    document.getElementById('editImage').value = '';
+    const editModal = new bootstrap.Modal(document.getElementById('editModal'));
+    editModal.show();
+}
+
+function toggleAvailable(itemId, isAvailable) {
+    const formData = new FormData();
+    formData.append('is_available', isAvailable);
+    formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+    fetch('/management/menu/update/' + itemId + '/', { method: 'POST', body: formData });
+}
+
+function deleteItem(itemId) {
+    if(confirm('削除しますか?')) {
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        fetch('/management/menu/delete/' + itemId + '/', { method: 'POST', body: formData })
+            .then(() => location.reload());
+    }
+}
+</script>
+{% endblock %}

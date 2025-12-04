@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>レシート - {{ session.table }}</title>
+    <style>
+        body { font-family: monospace; width: 300px; margin: 20px auto; }
+        .header { text-align: center; border-bottom: 2px solid #000; padding-bottom: 10px; margin-bottom: 10px; }
+        .item { display: flex; justify-content: space-between; margin: 5px 0; }
+        .total { border-top: 2px solid #000; padding-top: 10px; margin-top: 10px; font-weight: bold; font-size: 1.2em; }
+        @media print {
+            button { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h2>レシート</h2>
+        <p>{{ session.table }}</p>
+        <p>{{ session.started_at|date:"Y/m/d H:i" }}</p>
+    </div>
+    
+    {% for order in orders %}
+    <div class="item">
+        <span>{{ order.menu_item.name }} x{{ order.quantity }}</span>
+        <span>¥{{ order.subtotal }}</span>
+    </div>
+    {% endfor %}
+    
+    <div class="total">
+        <div class="item">
+            <span>合計</span>
+            <span>¥{{ total_amount }}</span>
+        </div>
+    </div>
+    
+    <div style="text-align: center; margin-top: 20px;">
+        <button onclick="window.print()" class="no-print">印刷</button>
+        <button onclick="window.close()" class="no-print">閉じる</button>
+    </div>
+</body>
+</html>

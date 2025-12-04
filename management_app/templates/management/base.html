@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}管理画面{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% if user.is_authenticated %}
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'management:dashboard' %}">管理画面</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'management:dashboard' %}">ダッシュボード</a>
+                    </li>
+                    {% if user.role == 'ADMIN' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'management:menu_management' %}">メニュー管理</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'management:sales_report' %}">売上管理</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'management:user_management' %}">ユーザー管理</a>
+                    </li>
+                    {% endif %}
+                </ul>
+                <span class="navbar-text me-3">
+                    {{ user.username }} ({{ user.get_role_display }})
+                </span>
+                <a href="{% url 'management:logout' %}" class="btn btn-outline-light btn-sm">ログアウト</a>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+
+    <div class="container-fluid mt-4">
+        {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        {% endif %}
+        
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

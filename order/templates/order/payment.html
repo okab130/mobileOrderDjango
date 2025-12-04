@@ -1,0 +1,47 @@
+{% extends 'order/base.html' %}
+
+{% block title %}会計 - モバイルオーダー{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-body">
+                <h2 class="card-title mb-4 text-center">お会計（{{ session.table }}）</h2>
+                
+                {% if orders %}
+                <div class="list-group mb-4">
+                    {% for order in orders %}
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h6 class="mb-1">{{ order.menu_item.name }}</h6>
+                                <small class="text-muted">¥{{ order.menu_item.price }} × {{ order.quantity }}</small>
+                            </div>
+                            <div class="text-primary fw-bold">¥{{ order.subtotal }}</div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="card bg-light">
+                    <div class="card-body">
+                        <h4 class="text-center mb-0">
+                            合計金額: <span class="text-primary">¥{{ total_amount }}</span>
+                        </h4>
+                    </div>
+                </div>
+                
+                <div class="alert alert-info mt-4 text-center">
+                    <p class="mb-0">レシートを持ってレジまでお越しください</p>
+                </div>
+                {% else %}
+                <div class="alert alert-warning text-center">
+                    まだ注文がありません
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

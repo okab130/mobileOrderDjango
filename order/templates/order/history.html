@@ -1,0 +1,50 @@
+{% extends 'order/base.html' %}
+
+{% block title %}注文履歴 - モバイルオーダー{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">注文履歴（{{ session.table }}）</h2>
+
+<button onclick="location.reload()" class="btn btn-secondary mb-3">
+    <i class="bi bi-arrow-clockwise"></i> 更新
+</button>
+
+{% if orders %}
+<div class="list-group">
+    {% for order in orders %}
+    <div class="list-group-item">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h6 class="mb-1">{{ order.menu_item.name }} × {{ order.quantity }}</h6>
+                <small class="text-muted">{{ order.ordered_at|date:"Y/m/d H:i" }}</small>
+            </div>
+            <div class="text-end">
+                <div class="mb-1">
+                    {% if order.status == 'PENDING' %}
+                        <span class="badge bg-secondary">未着手</span>
+                    {% elif order.status == 'COOKING' %}
+                        <span class="badge bg-info">調理中</span>
+                    {% elif order.status == 'COMPLETED' %}
+                        <span class="badge bg-warning">完成</span>
+                    {% elif order.status == 'SERVED' %}
+                        <span class="badge bg-success">提供済</span>
+                    {% endif %}
+                </div>
+                <div class="text-primary fw-bold">¥{{ order.subtotal }}</div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="card mt-4">
+    <div class="card-body">
+        <h5>合計金額: <span class="text-primary">¥{{ session.total_amount }}</span></h5>
+    </div>
+</div>
+{% else %}
+<div class="alert alert-info">
+    まだ注文がありません
+</div>
+{% endif %}
+{% endblock %}
