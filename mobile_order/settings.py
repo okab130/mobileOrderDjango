@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-dhse=1f3gn7#+e517(uocw=3*1krno%n@-9y!)nu9=xq^)ioy6
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['627ace9cdb19.ngrok-free.app', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['c84ee46fadf1.ngrok-free.app', 'localhost', '127.0.0.1']
 
 
 # Application definition
@@ -131,4 +131,4 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # CSRF_TRUSTED_ORIGINSを追加（ファイル末尾に追加）
-CSRF_TRUSTED_ORIGINS = ['https://627ace9cdb19.ngrok-free.app']
+CSRF_TRUSTED_ORIGINS = ['https://c84ee46fadf1.ngrok-free.app']

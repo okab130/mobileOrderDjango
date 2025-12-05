@@ -36,8 +36,23 @@ def logout_view(request):
 @login_required
 def dashboard(request):
     """ダッシュボード（注文管理）"""
+    # 未提供の注文（提供済以外）
     orders = Order.objects.select_related('session', 'session__table', 'menu_item').exclude(status='SERVED').order_by('ordered_at')
+    
+    # 未会計・未提供の注文（ACTIVEセッションかつ提供済以外）
+    unpaid_unserved_orders = Order.objects.select_related('session', 'session__table', 'menu_item').filter(
+        session__status='ACTIVE'
+    ).exclude(status='SERVED').order_by('session__table', 'ordered_at')
+    
+    # 未会計・全注文（ACTIVEセッションの全注文）
+    unpaid_orders = Order.objects.select_related('session', 'session__table', 'menu_item').filter(
+        session__status='ACTIVE'
+    ).order_by('session__table', 'ordered_at')
+    
     staff_calls = StaffCall.objects.filter(status='PENDING').select_related('table', 'session').order_by('called_at')
+    
+    # 未会計のセッションを取得
+    unpaid_sessions = Session.objects.filter(status='ACTIVE').select_related('table').order_by('started_at')
     
     # 経過時間を計算
     now = timezone.now()
@@ -47,7 +62,10 @@ def dashboard(request):
     
     return render(request, 'management/dashboard.html', {
         'orders': orders,
-        'staff_calls': staff_calls
+        'unpaid_unserved_orders': unpaid_unserved_orders,
+        'unpaid_orders': unpaid_orders,
+        'staff_calls': staff_calls,
+        'unpaid_sessions': unpaid_sessions
     })
 
 
@@ -81,9 +99,15 @@ def resolve_staff_call(request):
 
 @login_required
 def print_receipt(request, session_id):
-    """レシート印刷"""
+    """会計・レシート印刷"""
     session = get_object_or_404(Session, id=session_id)
     orders = session.orders.all()
+    
+    # 会計完了処理
+    if session.status == 'ACTIVE':
+        session.status = 'COMPLETED'
+        session.completed_at = timezone.now()
+        session.save()
     
     return render(request, 'management/receipt.html', {
         'session': session,

@@ -8,11 +8,22 @@
 <div class="row">
     <div class="col-md-8">
         <div class="card mb-4">
-            <div class="card-header bg-primary text-white">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">注文一覧</h5>
+                <div class="btn-group btn-group-sm" role="group">
+                    <input type="radio" class="btn-check" name="orderFilter" id="filterUnserved" autocomplete="off" checked>
+                    <label class="btn btn-outline-light" for="filterUnserved" onclick="showUnservedOrders()">未提供</label>
+                    
+                    <input type="radio" class="btn-check" name="orderFilter" id="filterUnpaidUnserved" autocomplete="off">
+                    <label class="btn btn-outline-light" for="filterUnpaidUnserved" onclick="showUnpaidUnservedOrders()">未会計・未提供</label>
+                    
+                    <input type="radio" class="btn-check" name="orderFilter" id="filterUnpaidAll" autocomplete="off">
+                    <label class="btn btn-outline-light" for="filterUnpaidAll" onclick="showUnpaidAllOrders()">未会計・全注文</label>
+                </div>
             </div>
             <div class="card-body">
-                <div class="table-responsive">
+                <!-- 未提供の注文一覧 -->
+                <div id="unservedOrders" class="table-responsive">
                     <table class="table table-hover">
                         <thead>
                             <tr>
@@ -59,6 +70,91 @@
                         </tbody>
                     </table>
                 </div>
+                
+                <!-- 未会計・未提供の注文一覧 -->
+                <div id="unpaidUnservedOrders" class="table-responsive" style="display:none;">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>テーブル</th>
+                                <th>商品</th>
+                                <th>数量</th>
+                                <th>注文時刻</th>
+                                <th>単価</th>
+                                <th>小計</th>
+                                <th>ステータス</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in unpaid_unserved_orders %}
+                            <tr>
+                                <td>{{ order.session.table }}</td>
+                                <td>{{ order.menu_item.name }}</td>
+                                <td>{{ order.quantity }}</td>
+                                <td>{{ order.ordered_at|date:"H:i" }}</td>
+                                <td>¥{{ order.menu_item.price }}</td>
+                                <td>¥{{ order.subtotal }}</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if order.status == 'PENDING' %}bg-secondary
+                                        {% elif order.status == 'COOKING' %}bg-info
+                                        {% elif order.status == 'COMPLETED' %}bg-warning
+                                        {% endif %}">
+                                        {{ order.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">未会計・未提供の注文がありません</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 未会計・全注文一覧 -->
+                <div id="unpaidAllOrders" class="table-responsive" style="display:none;">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>テーブル</th>
+                                <th>商品</th>
+                                <th>数量</th>
+                                <th>注文時刻</th>
+                                <th>単価</th>
+                                <th>小計</th>
+                                <th>ステータス</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in unpaid_orders %}
+                            <tr>
+                                <td>{{ order.session.table }}</td>
+                                <td>{{ order.menu_item.name }}</td>
+                                <td>{{ order.quantity }}</td>
+                                <td>{{ order.ordered_at|date:"H:i" }}</td>
+                                <td>¥{{ order.menu_item.price }}</td>
+                                <td>¥{{ order.subtotal }}</td>
+                                <td>
+                                    <span class="badge 
+                                        {% if order.status == 'PENDING' %}bg-secondary
+                                        {% elif order.status == 'COOKING' %}bg-info
+                                        {% elif order.status == 'COMPLETED' %}bg-warning
+                                        {% elif order.status == 'SERVED' %}bg-success
+                                        {% endif %}">
+                                        {{ order.get_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted">未会計の全注文がありません</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     </div>
@@ -85,15 +181,32 @@
         
         <div class="card">
             <div class="card-header bg-info text-white">
-                <h5 class="mb-0">レシート印刷</h5>
+                <h5 class="mb-0">会計・レシート印刷</h5>
             </div>
             <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">未会計のセッションID</label>
+                    <div class="list-group" style="max-height: 250px; overflow-y: auto;">
+                        {% for session in unpaid_sessions %}
+                        <button type="button" class="list-group-item list-group-item-action" onclick="selectSession({{ session.id }})">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>ID: {{ session.id }}</strong> - {{ session.table }}<br>
+                                    <small class="text-muted">開始: {{ session.started_at|date:"H:i" }} | 人数: {{ session.party_size }}人 | 合計: ¥{{ session.total_amount }}</small>
+                                </div>
+                            </div>
+                        </button>
+                        {% empty %}
+                        <div class="list-group-item text-muted">未会計のセッションはありません</div>
+                        {% endfor %}
+                    </div>
+                </div>
                 <form>
                     <div class="mb-3">
-                        <label class="form-label">セッションID</label>
-                        <input type="number" class="form-control" id="sessionId" placeholder="セッションID">
+                        <label class="form-label">選択されたセッションID</label>
+                        <input type="number" class="form-control" id="sessionId" placeholder="上記から選択" readonly>
                     </div>
-                    <button type="button" class="btn btn-primary w-100" onclick="printReceipt()">印刷</button>
+                    <button type="button" class="btn btn-primary w-100" onclick="printReceipt()" id="printBtn" disabled>会計・レシート印刷</button>
                 </form>
             </div>
         </div>
@@ -101,6 +214,29 @@
 </div>
 
 <script>
+function showUnservedOrders() {
+    document.getElementById('unservedOrders').style.display = 'block';
+    document.getElementById('unpaidUnservedOrders').style.display = 'none';
+    document.getElementById('unpaidAllOrders').style.display = 'none';
+}
+
+function showUnpaidUnservedOrders() {
+    document.getElementById('unservedOrders').style.display = 'none';
+    document.getElementById('unpaidUnservedOrders').style.display = 'block';
+    document.getElementById('unpaidAllOrders').style.display = 'none';
+}
+
+function showUnpaidAllOrders() {
+    document.getElementById('unservedOrders').style.display = 'none';
+    document.getElementById('unpaidUnservedOrders').style.display = 'none';
+    document.getElementById('unpaidAllOrders').style.display = 'block';
+}
+
+function selectSession(sessionId) {
+    document.getElementById('sessionId').value = sessionId;
+    document.getElementById('printBtn').disabled = false;
+}
+
 function updateStatus(orderId, status) {
     const formData = new FormData();
     formData.append('order_id', orderId);
